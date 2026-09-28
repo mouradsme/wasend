@@ -1,0 +1,18 @@
+name = "wasend"
+main = "src/index.ts"
+compatibility_date = "2026-09-29"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "development"
+MAX_MESSAGE_CHARS = "4096"
+
+[durable_objects]
+bindings = [{ name = "SESSIONS", class_name = "WhatsAppSession" }]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["WhatsAppSession"]
+
+[triggers]
+crons = ["*/5 * * * *"]
