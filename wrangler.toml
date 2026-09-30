@@ -3,9 +3,61 @@ main = "src/index.ts"
 compatibility_date = "2026-09-29"
 compatibility_flags = ["nodejs_compat"]
 
+# The dashboard is a Svelte app in dashboard/; this builds it into ./public before every dev run and deploy.
+[build]
+command = "npm run build:dashboard"
+watch_dir = "dashboard"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
 [vars]
 ENVIRONMENT = "development"
 MAX_MESSAGE_CHARS = "4096"
+# Email alerts are optional and off until set up. They need a domain on Cloudflare DNS that is
+# onboarded to Cloudflare Email Service (`npx wrangler email sending enable yourdomain.com`).
+# Then uncomment this sender address and the [[send_email]] block below. Slack alerts need no setup.
+# ALERT_EMAIL_FROM = "alerts@yourdomain.com"
+
+# [[send_email]]
+# name = "EMAIL"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "wasend"
+database_id = "5d7d87af-b323-4e26-8785-71aceb3ccd76"
+migrations_dir = "migrations"
+
+# namespace_id values must be unique within your Cloudflare account.
+[[ratelimits]]
+name = "EDGE_LIMIT"
+namespace_id = "907301"
+[ratelimits.simple]
+limit = 120
+period = 60
+
+[[ratelimits]]
+name = "LOGIN_LIMIT"
+namespace_id = "907302"
+[ratelimits.simple]
+limit = 8
+period = 60
+
+[[ratelimits]]
+name = "ACCOUNT_LIMIT"
+namespace_id = "907303"
+[ratelimits.simple]
+limit = 120
+period = 60
+
+[[ratelimits]]
+name = "SEND_LIMIT"
+namespace_id = "907304"
+[ratelimits.simple]
+limit = 20
+period = 60
 
 [durable_objects]
 bindings = [{ name = "SESSIONS", class_name = "WhatsAppSession" }]
@@ -13,6 +65,12 @@ bindings = [{ name = "SESSIONS", class_name = "WhatsAppSession" }]
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["WhatsAppSession"]
+
+# The WhatsApp client library expects Node's `ws` and a WASM helper package; neither runs on
+# Workers, so both resolve to small compatible stand-ins.
+[alias]
+"ws" = "./src/shims/ws.js"
+"whatsapp-rust-bridge" = "./src/shims/whatsapp-rust-bridge.js"
 
 [triggers]
 crons = ["*/5 * * * *"]

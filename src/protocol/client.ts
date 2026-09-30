@@ -1,14 +1,22 @@
-/** Clean-room Workers-compatible protocol boundary; intentionally fails closed until implemented. */
+/**
+ * Contract between the session Durable Object and the WhatsApp transport.
+ *
+ * The WhatsApp Web protocol itself (QR linking, encryption, framing) is not implemented in this
+ * repository; it comes from a client library wrapped by SocketProtocolClient (socket-client.ts),
+ * which runs inside the session DO.
+ */
+
 export interface IncomingText { id: string; from: string; text: string; timestamp: number; }
+
+export type ProtocolState = "unpaired" | "pairing" | "connected" | "disconnected" | "logged_out";
+
 export interface ProtocolClient {
-  start(onText: (message: IncomingText) => Promise<void>, onState: (state: "connected" | "disconnected") => Promise<void>): Promise<void>;
+  /** Resolve once the client is listening; socket state changes arrive via onState. */
+  start(onText: (message: IncomingText) => Promise<void>, onState: (state: ProtocolState) => Promise<void>): Promise<void>;
+  /** Begin (or refresh) QR pairing and return the short-lived QR payload. */
   pair(): Promise<{ qr: string }>;
+  /** Current protocol session state without opening a socket. */
+  state(): Promise<ProtocolState>;
   sendText(to: string, text: string): Promise<{ providerMessageId: string }>;
   close(): Promise<void>;
-}
-export class UnimplementedProtocolClient implements ProtocolClient {
-  async start(): Promise<void> { throw new Error("WhatsApp Web protocol client is not implemented"); }
-  async pair(): Promise<{ qr: string }> { throw new Error("WhatsApp Web pairing is not implemented"); }
-  async sendText(): Promise<{ providerMessageId: string }> { throw new Error("WhatsApp Web text transport is not implemented"); }
-  async close(): Promise<void> {}
 }

@@ -1,0 +1,85 @@
+/* Tokens. The rail is a dark switchboard panel; the work area is cool paper. Lamp colours carry state and nothing else does. */
+:root {
+  --paper: #f1f4f7;
+  --surface: #ffffff;
+  --ink: #0e1b2e;
+  --ink-soft: #33435a;
+  --muted: #617186;
+  --line: #d6dde6;
+  --line-soft: #e6ebf1;
+  --cord: #3a36db;
+  --cord-dark: #2a27b0;
+  --lamp-live: #19c37d;
+  --lamp-live-ink: #0b7a4d;
+  --lamp-wait: #f0b323;
+  --lamp-wait-ink: #8a6200;
+  --lamp-down: #e5484d;
+  --lamp-down-ink: #b3262b;
+  --lamp-idle: #9aa6b5;
+  --rail: #0e1b2e;
+  --rail-line: #22334d;
+  --rail-text: #c9d3e0;
+  --display: "Big Shoulders Display Variable", "Arial Narrow", sans-serif;
+  --body: "Instrument Sans Variable", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { font: 15px/1.5 var(--body); color: var(--ink); background: var(--paper); -webkit-text-size-adjust: 100%; }
+body { margin: 0; min-height: 100vh; }
+h1, h2, h3, p { margin: 0; }
+a { color: var(--cord); }
+
+:focus-visible { outline: 2px solid var(--cord); outline-offset: 2px; }
+
+/* Section titles: condensed caps, like engraved panel labels. */
+.label { font: 700 0.8rem/1 var(--display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 0.87rem; }
+.muted { color: var(--muted); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; min-width: 0; }
+.card > .label { display: block; margin-bottom: 14px; }
+.card p + p { margin-top: 8px; }
+
+.field { display: grid; gap: 6px; }
+.field > span { font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.field small { color: var(--muted); }
+input, select, textarea {
+  font: inherit; color: inherit; width: 100%; padding: 9px 11px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 7px;
+}
+input:hover, select:hover, textarea:hover { border-color: #b9c3d0; }
+input:disabled { background: var(--paper); color: var(--muted); }
+textarea { min-height: 84px; resize: vertical; }
+
+.btn {
+  font: 600 0.93rem/1 var(--body); padding: 10px 15px; border-radius: 7px; cursor: pointer;
+  border: 1px solid var(--cord); background: var(--cord); color: #fff; white-space: nowrap;
+}
+.btn:hover { background: var(--cord-dark); border-color: var(--cord-dark); }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.btn.quiet { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.btn.quiet:hover { border-color: var(--ink-soft); background: var(--surface); }
+.btn.danger { background: var(--surface); color: var(--lamp-down-ink); border-color: #efc4c5; }
+.btn.danger:hover { background: #fdf1f1; border-color: var(--lamp-down); }
+.btn.small { padding: 7px 10px; font-size: 0.85rem; }
+
+.stack { display: grid; gap: 12px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.row.end { justify-content: flex-end; }
+.spread { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.list > li { padding: 12px 0; border-top: 1px solid var(--line-soft); }
+.list > li:first-child { border-top: 0; padding-top: 0; }
+.list > li:last-child { padding-bottom: 0; }
+
+.secret { font: 500 0.87rem/1.5 var(--mono); background: #f4f3ff; border: 1px dashed var(--cord); border-radius: 7px; padding: 12px; overflow-wrap: anywhere; }
+pre.code { font: 400 0.83rem/1.6 var(--mono); background: var(--ink); color: #dbe4f0; border-radius: 7px; padding: 14px; margin: 0; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.empty { color: var(--muted); padding: 6px 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

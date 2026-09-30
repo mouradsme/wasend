@@ -3,3 +3,8 @@ node_modules/
 dist/
 .dev.vars
 coverage/
+.env
+.dev.env
+.deploy-secrets.env
+# Built dashboard (from dashboard/)
+public/

@@ -4,7 +4,14 @@ export function json(data: unknown, status = 200): Response {
 export async function readJson<T>(request: Request): Promise<T> {
   if (!(request.headers.get("content-type") ?? "").toLowerCase().includes("application/json")) throw new HttpError(415, "content_type_required", "Send application/json");
   if (Number(request.headers.get("content-length") ?? 0) > 16_384) throw new HttpError(413, "body_too_large", "Request body exceeds 16 KiB");
-  try { return await request.json() as T; } catch { throw new HttpError(400, "invalid_json", "Request body must be valid JSON"); }
+  try {
+    const raw = await request.text();
+    if (new TextEncoder().encode(raw).byteLength > 16_384) throw new HttpError(413, "body_too_large", "Request body exceeds 16 KiB");
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(400, "invalid_json", "Request body must be valid JSON");
+  }
 }
 export class HttpError extends Error { constructor(readonly status: number, readonly code: string, message: string) { super(message); } }
 export function errorResponse(error: unknown): Response {
