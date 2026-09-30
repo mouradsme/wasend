@@ -6,13 +6,14 @@
   import SessionView from "./views/SessionView.svelte";
   import KeysView from "./views/KeysView.svelte";
   import AlertsView from "./views/AlertsView.svelte";
+  import PasswordView from "./views/PasswordView.svelte";
 
   const DEMO = import.meta.env.DEV && new URLSearchParams(location.search).has("demo");
 
   let signedIn = $state(hasToken() || DEMO);
   let sessions = $state([]); // [{ id, createdAt, state }]
-  // "session" | "keys" | "alerts"; the account pages are addressable as #keys and #alerts.
-  let view = $state(["keys", "alerts"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "session");
+  // "session" | "keys" | "alerts" | "password"; the account pages are addressable as #keys, #alerts and #password.
+  let view = $state(["keys", "alerts", "password"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "session");
   $effect(() => { history.replaceState(null, "", view === "session" ? location.pathname + location.search : "#" + view); });
   let selected = $state("");
   let newId = $state("");
@@ -92,6 +93,7 @@
         <span class="rail-label">Account</span>
         <button class="line" class:active={view === "keys"} onclick={() => { view = "keys"; }}>API keys</button>
         <button class="line" class:active={view === "alerts"} onclick={() => { view = "alerts"; }}>Alerts</button>
+        <button class="line" class:active={view === "password"} onclick={() => { view = "password"; }}>Password</button>
       </nav>
 
       <button class="line out" onclick={signOut}>Sign out</button>
@@ -102,6 +104,8 @@
         <KeysView session={selected} />
       {:else if view === "alerts"}
         <AlertsView />
+      {:else if view === "password"}
+        <PasswordView />
       {:else if selected}
         {#key selected}
           <SessionView id={selected} onState={(state) => setState(selected, state)} onDeleted={loadSessions} />

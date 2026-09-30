@@ -46,6 +46,21 @@ export async function login(env: Env, email: string, password: string): Promise<
   return { token, expiresAt, account: { id: row.id, email: row.email, role: row.role } };
 }
 
+/**
+ * Lets a signed-in account replace its own password. The current password is required so a stolen
+ * login token alone cannot take the account over; every other login token is signed out.
+ */
+export async function changePassword(env: Env, accountId: string, currentPassword: unknown, newPassword: unknown, keepToken: string): Promise<void> {
+  if (typeof currentPassword !== "string" || typeof newPassword !== "string" || currentPassword.length > 256) throw new HttpError(400, "invalid_password", "Send currentPassword and newPassword");
+  if (newPassword.length < 12 || newPassword.length > 256) throw new HttpError(400, "invalid_password", "The new password must be 12–256 characters");
+  const row = await env.DB.prepare("SELECT password_salt,password_hash FROM accounts WHERE id=?").bind(accountId).first<{ password_salt: string; password_hash: string }>();
+  if (!row || !safeEqual(await passwordDigest(currentPassword, unb64(row.password_salt)), row.password_hash)) throw new HttpError(403, "wrong_password", "The current password is incorrect");
+  if (newPassword === currentPassword) throw new HttpError(400, "invalid_password", "The new password must differ from the current one");
+  const { salt, hash } = await hashPassword(newPassword);
+  await env.DB.prepare("UPDATE accounts SET password_salt=?,password_hash=? WHERE id=?").bind(salt, hash, accountId).run();
+  await env.DB.prepare("DELETE FROM access_tokens WHERE account_id=? AND token_hash<>?").bind(accountId, await sha(keepToken)).run();
+}
+
 const API_KEY_PREFIX = "wsk_";
 const MAX_API_KEYS = 20;
 

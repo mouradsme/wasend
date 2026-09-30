@@ -1,6 +1,6 @@
 import type { Env } from "./types";
 import { errorResponse, HttpError, json, readJson, validId } from "./lib/http";
-import { createAccount, createApiKey, hashPassword, listApiKeys, login, requireAccount, requireSuperAdmin, revokeApiKey, sha } from "./lib/auth";
+import { changePassword, createAccount, createApiKey, hashPassword, listApiKeys, login, requireAccount, requireSuperAdmin, revokeApiKey, sha } from "./lib/auth";
 import { alertMessage, emailAvailable, getAlertSettings, parseAlertSettings, saveAlertSettings, sendAlert } from "./lib/alerts";
 import { WhatsAppSession } from "./durable/session";
 
@@ -31,6 +31,15 @@ export default {
         return json({ loggedOut: true });
       }
       if (url.pathname === "/v1/auth/me" && request.method === "GET") return json({ account });
+      if (url.pathname === "/v1/auth/password" && request.method === "POST") {
+        if (account.auth !== "login") throw new HttpError(403, "login_required", "Change the password with a login token, not an API key");
+        // Same throttle as login: this route also checks a password.
+        if (!(await withinLimit(env.LOGIN_LIMIT, account.id))) return rateLimited();
+        const body = await readJson<{ currentPassword?: unknown; newPassword?: unknown }>(request);
+        const token = request.headers.get("authorization")!.match(/^Bearer\s+(\S+)$/i)![1];
+        await changePassword(env, account.id, body.currentPassword, body.newPassword, token);
+        return json({ changed: true });
+      }
       const apiKey = url.pathname.match(/^\/v1\/api-keys(?:\/([\w-]+))?$/);
       if (apiKey) {
         // A leaked key must not be able to mint or revoke keys, so key management needs a dashboard login.

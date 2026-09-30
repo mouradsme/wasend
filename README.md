@@ -9,7 +9,7 @@ It runs entirely on Cloudflare. There is no server, container, or browser to hos
 - Links one or more WhatsApp accounts ("sessions") by QR code, the same way WhatsApp Web does.
 - Sends text messages through `POST /v1/sessions/{session}/messages`, authenticated with an API key.
 - Delivers incoming text messages and connection changes to your HTTPS webhooks, HMAC-signed and retried.
-- Provides a dashboard for sessions, pairing, test sends, API keys, webhooks, recent events, and alerts.
+- Provides a dashboard for sessions, pairing, test sends, API keys, webhooks, recent events, alerts, and changing your password.
 - Alerts you on Slack or by email when a session stays disconnected or gets unlinked.
 - Supports multiple dashboard accounts, each limited to its own sessions.
 
@@ -100,6 +100,7 @@ Every `/v1` route except login takes `Authorization: Bearer <token>`, where the 
 | `POST` | `/v1/auth/login` | Exchange email and password for a login token |
 | `POST` | `/v1/auth/logout` | Invalidate the current login token |
 | `GET` | `/v1/auth/me` | Current account |
+| `POST` | `/v1/auth/password` | Change your own password with `{"currentPassword","newPassword"}` (login token only) |
 | `GET, POST` | `/v1/api-keys` | List or create API keys (login token only) |
 | `DELETE` | `/v1/api-keys/{id}` | Revoke an API key (login token only) |
 | `GET, PUT` | `/v1/alerts` | Read or save alert destinations (login token only) |
