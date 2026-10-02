@@ -15,7 +15,6 @@ not_found_handling = "single-page-application"
 
 [vars]
 ENVIRONMENT = "development"
-MAX_MESSAGE_CHARS = "4096"
 # Email alerts are optional and off until set up. They need a domain on Cloudflare DNS that is
 # onboarded to Cloudflare Email Service (`npx wrangler email sending enable yourdomain.com`).
 # Then uncomment this sender address and the [[send_email]] block below. Slack alerts need no setup.

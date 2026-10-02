@@ -7,7 +7,6 @@ export interface Env {
   ACCOUNT_LIMIT: RateLimit;
   SEND_LIMIT: RateLimit;
   ENVIRONMENT: string;
-  MAX_MESSAGE_CHARS: string;
   SUPER_ADMIN_TOKEN?: string;
   WEBHOOK_ALLOWED_HOSTS?: string;
   /** Cloudflare Email Service binding; only present when email alerts are set up (see README). */

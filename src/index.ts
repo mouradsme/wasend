@@ -1,5 +1,5 @@
 import type { Env } from "./types";
-import { errorResponse, HttpError, json, readJson, validId } from "./lib/http";
+import { errorResponse, HttpError, json, MESSAGE_BODY_LIMIT, readJson, validId } from "./lib/http";
 import { changePassword, createAccount, createApiKey, hashPassword, listApiKeys, login, requireAccount, requireSuperAdmin, revokeApiKey, sha } from "./lib/auth";
 import { alertMessage, emailAvailable, getAlertSettings, parseAlertSettings, saveAlertSettings, sendAlert } from "./lib/alerts";
 import { WhatsAppSession } from "./durable/session";
@@ -86,7 +86,7 @@ export default {
       if (request.method === "POST" && operation === "pair") return stub.fetch(new Request(`https://do/pair?session=${encodeURIComponent(session)}`, { method: "POST" }));
       if (request.method === "POST" && operation === "messages") {
         if (!(await withinLimit(env.SEND_LIMIT, `${account.id}:${session}`))) return rateLimited();
-        const body = await readJson<Record<string, unknown>>(request);
+        const body = await readJson<Record<string, unknown>>(request, MESSAGE_BODY_LIMIT);
         const key = request.headers.get("idempotency-key");
         if (key && !body.idempotencyKey) body.idempotencyKey = key;
         return stub.fetch(new Request(`https://do/messages?session=${encodeURIComponent(session)}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));

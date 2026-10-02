@@ -6,6 +6,7 @@
  * Linked-device credentials and Signal keys live in the DO's SQLite (`wa_auth`). The socket only
  * exists while the DO is in memory, so the DO re-opens it from its alarm after an eviction.
  */
+import "../shims/buffer-fixes.js"; // must run before the WhatsApp library encodes anything
 import makeWASocket, { Browsers, BufferJSON, DisconnectReason, initAuthCreds, normalizeMessageContent, proto } from "baileys";
 import type { AuthenticationCreds, ConnectionState, SignalDataSet, SignalDataTypeMap, SignalKeyStore, WAMessage, WASocket } from "baileys";
 import { renderSVG } from "uqr";

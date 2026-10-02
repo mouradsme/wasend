@@ -147,7 +147,7 @@
           <select bind:value={message.kind}><option value="transactional">Transactional</option><option value="otp">One-time code</option></select>
         </label>
       </div>
-      <label class="field"><span>Message</span><textarea bind:value={message.text} maxlength="4096" required></textarea></label>
+      <label class="field"><span>Message</span><textarea bind:value={message.text} required></textarea></label>
       <div class="row">
         <button class="btn" disabled={sending || status.state !== "connected"}>{sending ? "Sending…" : "Send message"}</button>
         {#if status.state && status.state !== "connected"}<span class="muted">Link the session first.</span>{/if}

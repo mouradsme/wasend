@@ -1,11 +1,13 @@
 import type { Env, MessageRequest, SessionState, WaEvent } from "../types";
-import { HttpError, json, readJson } from "../lib/http";
+import { HttpError, json, MESSAGE_BODY_LIMIT, readJson } from "../lib/http";
 import { makeEvent } from "../lib/events";
 import { deliverWebhook } from "../lib/webhooks";
 import type { IncomingText, ProtocolState } from "../protocol/client";
 import { SocketProtocolClient } from "../protocol/socket-client";
 import { validateWebhookUrl } from "../lib/url-safety";
 import { alertMessage, getSessionAlertSettings, notifySessionOwner, sendAlert, type AlertKind } from "../lib/alerts";
+
+const WHATSAPP_MAX_TEXT = 65_536;
 
 export class WhatsAppSession {
   private readonly sql: SqlStorage;
@@ -45,7 +47,7 @@ export class WhatsAppSession {
     try {
       if (url.pathname === "/status" && request.method === "GET") return json({ session: url.searchParams.get("session"), state: this.state(), qr: this.currentQr() });
       if (url.pathname === "/pair" && request.method === "POST") return await this.pair(url.searchParams.get("session") ?? "");
-      if (url.pathname === "/messages" && request.method === "POST") return await this.send(await readJson<MessageRequest>(request), url.searchParams.get("session") ?? "");
+      if (url.pathname === "/messages" && request.method === "POST") return await this.send(await readJson<MessageRequest>(request, MESSAGE_BODY_LIMIT), url.searchParams.get("session") ?? "");
       if (url.pathname === "/events" && request.method === "GET") return json({ events: this.sql.exec<{ payload: string }>("SELECT payload FROM events ORDER BY created_at DESC LIMIT 100").toArray().map(row => JSON.parse(row.payload)) });
       if (url.pathname === "/webhooks" && request.method === "GET") return json({ webhooks: this.sql.exec<{ id: string; url: string; enabled: number }>("SELECT id,url,enabled FROM webhooks ORDER BY id").toArray() });
       if (url.pathname === "/webhooks/deliveries" && request.method === "GET") return json({ failed: this.sql.exec("SELECT * FROM webhook_failures ORDER BY failed_at DESC LIMIT 100").toArray(), pending: this.sql.exec("SELECT COUNT(*) AS count FROM webhook_jobs").toArray()[0]?.count ?? 0 });
@@ -164,11 +166,10 @@ export class WhatsAppSession {
   }
 
   private async handleIncoming(session: string, message: IncomingText): Promise<void> {
-    const max = Number(this.env.MAX_MESSAGE_CHARS || 4096);
     if (!message.id || typeof message.id !== "string" || !message.from || !/^\+?[1-9]\d{6,14}$/.test(message.from) || typeof message.text !== "string" || !message.text.trim()) return;
     const seen = this.sql.exec("INSERT OR IGNORE INTO inbound_seen(id,expires_at) VALUES(?,?)", message.id, Date.now() + 86_400_000);
     if (!seen.rowsWritten) return; // duplicate inbound message; deliver once
-    const event = makeEvent(session, "message.received", { messageId: message.id, from: message.from, type: "text", text: message.text.slice(0, max), timestamp: message.timestamp });
+    const event = makeEvent(session, "message.received", { messageId: message.id, from: message.from, type: "text", text: message.text, timestamp: message.timestamp });
     await this.recordEvent(event);
   }
 
@@ -206,8 +207,9 @@ export class WhatsAppSession {
   private async send(input: MessageRequest, session: string): Promise<Response> {
     if (this.state() !== "connected") throw new HttpError(409, "session_not_connected", "Pair and connect the session before sending");
     if (!/^\+?[1-9]\d{6,14}$/.test(input.to)) throw new HttpError(400, "invalid_recipient", "to must be an international phone number");
-    const max = Number(this.env.MAX_MESSAGE_CHARS || 4096);
-    if (typeof input.text !== "string" || !input.text.trim() || input.text.length > max) throw new HttpError(400, "invalid_text", `text must contain 1 to ${max} characters`);
+    if (typeof input.text !== "string" || !input.text.trim()) throw new HttpError(400, "invalid_text", "text must not be empty");
+    // WaSend sets no length limit of its own; this is WhatsApp's maximum for one text message.
+    if (input.text.length > WHATSAPP_MAX_TEXT) throw new HttpError(400, "text_too_long", `WhatsApp accepts at most ${WHATSAPP_MAX_TEXT} characters per message`);
     const key = input.idempotencyKey;
     if (key && !/^[\w.:/-]{1,128}$/.test(key)) throw new HttpError(400, "invalid_idempotency_key", "Invalid idempotency key");
     if (key) {

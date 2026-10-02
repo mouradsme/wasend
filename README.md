@@ -80,7 +80,7 @@ curl -X POST https://<your-worker>.workers.dev/v1/sessions/<session>/messages \
   -d '{"to":"+15551234567","text":"Your code is 123456","kind":"otp"}'
 ```
 
-- `to` is an international phone number; `text` is up to 4,096 characters; `kind` is `otp` or `transactional`.
+- `to` is an international phone number; `text` has no WaSend limit beyond WhatsApp's own maximum of 65,536 characters; `kind` is `otp` or `transactional`.
 - A successful send returns `202` with `{"id":"msg_…","session":"…","status":"sent","providerMessageId":"…"}`.
 - The session must be paired and `connected`, otherwise the call returns `409 session_not_connected`. Connection problems return `503 session_unavailable` or `502 send_failed`.
 - Repeating a request with the same idempotency key within 24 hours returns the original result without sending again. The key can go in the `Idempotency-Key` header or an `idempotencyKey` body field.
